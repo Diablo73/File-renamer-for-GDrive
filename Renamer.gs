@@ -1,8 +1,8 @@
 function renamingByReplacingAStringWithAnother() {
 	var spreadsheetData = getSpreadsheetData();
-	var subFiles = getFilesIteratorFromFolderId(spreadsheetData.folderId);
-	if (subFiles) {
-		var numberOfFilesRenamed = renameFilesByReplacingAStringWithAnother(subFiles, spreadsheetData.searchString, spreadsheetData.replaceString);
+	var folderObject = getFolderObjectFromFolderId(spreadsheetData.folderId);
+	if (folderObject) {
+		var numberOfFilesRenamed = renameFilesByReplacingAStringWithAnother(folderObject, spreadsheetData);
 		ss.toast("Renamer has now completed ...\nNumber of files renamed = " + numberOfFilesRenamed, "Renamer END", -1);
 	}
 }
@@ -13,24 +13,32 @@ function getSpreadsheetData() {
 	ss = SpreadsheetApp.getActiveSpreadsheet();
 	sheet = SpreadsheetApp.getActiveSheet();
 
-	var folderId = sheet.getRange(6, 3).getValue();
+	var folderId = sheet.getRange(6, 2).getValue();
 	Logger.log("Folder Id is: " + folderId);
 
-	var searchString = sheet.getRange(11, 3).getValue();
+	var searchString = sheet.getRange(11, 2).getValue();
 	Logger.log("Search string is: " + searchString);
 
-	var replaceString = sheet.getRange(16, 3).getValue();
-	Logger.log("Replace with string is: " + replaceString);
+	var replaceString = sheet.getRange(16, 2).getValue();
+	Logger.log("Replacement string is: " + replaceString);
+
+	var multipleOccurence = sheet.getRange(6, 4).getValue();
+	Logger.log("Multiple Occurrence flag is: " + multipleOccurence);
+
+	var basicRenaming = sheet.getRange(11, 4).getValue();
+	Logger.log("Basic Renaming flag is: " + basicRenaming);
 
 	return {
 		folderId : folderId,
 		searchString : searchString,
-		replaceString : replaceString
+		replaceString : replaceString,
+		multipleOccurence : multipleOccurence,
+		basicRenaming : basicRenaming
 	}
 }
 
 
-function getFilesIteratorFromFolderId(folderId) {
+function getFolderObjectFromFolderId(folderId) {
 
 	stringInDriveLink = "folders/";
 	
@@ -39,9 +47,9 @@ function getFilesIteratorFromFolderId(folderId) {
 	}
 
 	try {
-		var subFiles = DriveApp.getFolderById(folderId).getFiles();
+		var folderObject = DriveApp.getFolderById(folderId);
 		ss.toast("Renamer has now started ...", "Renamer START", -1);
-		return subFiles;
+		return folderObject;
 	}catch(e) {
 		Logger.log("Error getting Google Drive folder: " + e);
 		var ui = SpreadsheetApp.getUi();
@@ -54,18 +62,48 @@ function getFilesIteratorFromFolderId(folderId) {
 }
 
 
-function renameFilesByReplacingAStringWithAnother(subFiles, searchString, replaceString) {
+function renameFilesByReplacingAStringWithAnother(folderObject, spreadsheetData) {
+	var searchString = spreadsheetData.searchString;
 	numberOfFilesRenamed = 0;
+	var searchStringList = [];
+	var replaceStringList = [];
+	if (spreadsheetData.basicRenaming) {
+		searchStringList  = ["+", "%20", "%2C", "%27", "%28", "%29", "%5B", "%5D"]
+		replaceStringList = [" ", " "  , ","  , "'"   , "("  , ")"  , "["  , "]"  ]
+	}
+	if (spreadsheetData.searchString != "") {
+		searchStringList.push(spreadsheetData.searchString);
+		replaceStringList.push(spreadsheetData.replaceString);
+	}
+    Logger.log("Search String list is: " + searchStringList);
+	Logger.log("Replace String list is: " + replaceStringList);
+	var subFiles = folderObject.getFiles();
+	
 	while (subFiles.hasNext()) {
 		var file = subFiles.next();
 		var fileName = file.getName();
 		Logger.log("Sub-file name is: " + fileName);
+		var newName = fileName;
+		var renameRequired = false;
 
-		if (fileName.includes(searchString)) {
-			var newName = fileName.replace(searchString, replaceString);
-			Logger.log("New name will be: " + newName);
-			file.setName(newName);
+		for (var i = 0; i < searchStringList.length; i++) {
+			if (newName.includes(searchStringList[i])) {
+				Logger.log("Search String is: " + searchStringList[i]);
+				Logger.log("Replace String is: " + replaceStringList[i]);
+				renameRequired = true;
+				if (spreadsheetData.multipleOccurence) {
+					while (newName.includes(searchStringList[i])) {
+						newName = newName.replace(searchStringList[i], replaceStringList[i]);
+					}
+				} else {
+					newName = newName.replace(searchStringList[i], replaceStringList[i]);
+				}
+			}
+		}
+		Logger.log("New name will be: " + newName);
+		if (renameRequired) {
 			numberOfFilesRenamed++;
+			file.setName(newName);
 		}
 	}
 	return numberOfFilesRenamed;

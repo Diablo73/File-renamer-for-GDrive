@@ -1,1 +1,1 @@
-# File-renamer-for-GDrive
+# Google-Apps-Scripts-GAS

@@ -11,7 +11,7 @@ function unZipper() {
 		var newFolderName = zipFileName;
 		var newFolderList = parentFolder.getFolders();
 
-		var unzippedFolder = createFolderForExtraction(newFolderList, newFolderName);
+		var unzippedFolder = createFolderForExtraction(parentFolder, newFolderList, newFolderName);
 
 		var noOfFilesExtracted = extractFilesFromZip(zipFileName, zipFileObject, unzippedFolder);
 
@@ -21,7 +21,7 @@ function unZipper() {
 }
 
 
-function createFolderForExtraction(newFolderList, newFolderName) {
+function createFolderForExtraction(parentFolder, newFolderList, newFolderName) {
 	var folderListNames = [];
 	while (newFolderList.hasNext()) {
 		var newFolderObject = newFolderList.next()

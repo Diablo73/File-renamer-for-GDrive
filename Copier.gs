@@ -5,7 +5,7 @@ function copyFilesFromOneFolderToAnother() {
 	var destinationFolder = DriveApp.getFolderById("1ZRD0h_j7c1HNQyFDw6r3xC7843C2gK4x");
 	var noOfFilesCopied = makeCopyFunction(parentFolder, destinationFolder);
 	Logger.log("Number of files copied = " + noOfFilesCopied);
-	ss.toast("Number of files copied = " + noOfFilesCopied);
+	ss.toast("Number of files copied = " + noOfFilesCopied, "Total Number", -1);
 }
 
 function getSpreadsheetData() {
@@ -41,7 +41,7 @@ function makeCopyFunction(parentFolder, destinationFolder) {
 	var noOfFilesCopied = 0;
 	var filesList = parentFolder.getFiles();
 	Logger.log("Destination Folder = " + destinationFolder.getName());
-	ss.toast("Destination Folder = " + destinationFolder.getName());
+	ss.toast("Destination Folder = " + destinationFolder.getName(), "Final Destination", -1);
 	while (filesList.hasNext()) {
 		var file = filesList.next();
 		file.makeCopy(file.getName(), destinationFolder);

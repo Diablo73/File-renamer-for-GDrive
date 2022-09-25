@@ -1,19 +1,19 @@
 function start() {
 	var spreadsheetID = SpreadsheetApp.openById("1iNznWxmRchZLPqwf3zh2P18vjvIcpqL2JAJWsB6y5OU");
 	var activeSheetObject = spreadsheetID.getActiveSheet();
-	
+
 	linksDetailsList = [];
 	linksDetailsList.push(["URL", "TITLE", "DESCRIPTION", "KEYWORDS"]);
 	globalDCSizeInMB = 0;
 	totalCount = 0;
-	
+
 	var startTime = new Date().getTime();
 	process();
 	var endTime = new Date().getTime();
 
 	duration = endTime - startTime;
 	globalDCSizeInGB = globalDCSizeInMB / 1024;
-	
+
 	if (totalCount > 23000 && (duration / 60000).toFixed(3) < 27) {
 		writeAndFormatSheet(activeSheetObject);
 	}

@@ -1,37 +1,55 @@
+try {
+	var ui = SpreadsheetApp.getUi();
+} catch (err) {
+	Logger.log(err);
+}
+
+
 function getSpreadsheetData() {
 
 	ss = SpreadsheetApp.getActiveSpreadsheet();
 	sheet = SpreadsheetApp.getActiveSheet();
+	var logText = "";
 
 	var folderId = sheet.getRange(2, 2).getValue();
-	Logger.log("Folder Id is: " + folderId);
+	logText += "Folder Id is: " + folderId;
 
-	var searchString = sheet.getRange(9, 2).getValue();
-	Logger.log("Search string is: " + searchString);
+	var renameFlag = sheet.getRange(4, 4).getValue();
+	logText += "\nRename Flag is: " + renameFlag;
 
-	var replaceString = sheet.getRange(14, 2).getValue();
-	Logger.log("Replacement string is: " + replaceString);
+	var searchString = sheet.getRange(11, 2).getValue();
+	logText += "\nSearch string is: " + searchString;
 
-	var multipleOccurence = sheet.getRange(9, 4).getValue();
-	Logger.log("Multiple Occurrence flag is: " + multipleOccurence);
+	var replaceString = sheet.getRange(16, 2).getValue();
+	logText += "\nReplacement string is: " + replaceString;
 
-	var basicRenaming = sheet.getRange(14, 4).getValue();
-	Logger.log("Basic Renaming flag is: " + basicRenaming);
+	var multipleOccurence = sheet.getRange(11, 4).getValue();
+	logText += "\nMultiple Occurrence flag is: " + multipleOccurence;
 
-	var insertString = sheet.getRange(25, 2).getValue();
-	Logger.log("Insertion String is: " + insertString);
+	var basicRenaming = sheet.getRange(16, 4).getValue();
+	logText += "\nBasic Renaming flag is: " + basicRenaming;
 
-	var insertIndex = sheet.getRange(25, 4).getValue();
-	Logger.log("Insertion Index is: " + insertIndex);
+	var insertString = sheet.getRange(27, 2).getValue();
+	logText += "\nInsertion String is: " + insertString;
+
+	var insertIndex = sheet.getRange(27, 4).getValue();
+	logText += "\nInsertion Index is: " + insertIndex;
+
+	var folderNameForGuid = sheet.getRange(36, 4).getValue();
+	logText += "\nFolder Name for GUID is: " + folderNameForGuid;
+
+	Logger.log(logText);
 
 	return {
 		folderId : folderId,
+		renameFlag : renameFlag,
 		searchString : searchString,
 		replaceString : replaceString,
 		multipleOccurence : multipleOccurence,
 		basicRenaming : basicRenaming,
 		insertString : insertString,
-		insertIndex : insertIndex
+		insertIndex : insertIndex,
+		folderNameForGuid : folderNameForGuid
 	}
 }
 
@@ -48,9 +66,8 @@ function getFolderObjectFromFolderId(folderId) {
 		var folderObject = DriveApp.getFolderById(folderId);
 		ss.toast("Renamer has now started ...", "Renamer START", -1);
 		return folderObject;
-	}catch(e) {
+	} catch(e) {
 		Logger.log("Error getting Google Drive folder: " + e);
-		var ui = SpreadsheetApp.getUi();
 		var result = ui.alert(
 			"Google Drive Folder ERROR",
 			"Unable to get Google Drive folder. Please check folder ID",
@@ -83,7 +100,7 @@ function renameFilesByReplacingAStringWithAnother(folderObject, spreadsheetData)
 		searchStringList.push(spreadsheetData.searchString);
 		replaceStringList.push(spreadsheetData.replaceString);
 	}
-    Logger.log("Search String list is: " + searchStringList);
+	Logger.log("Search String list is: " + searchStringList);
 	Logger.log("Replace String list is: " + replaceStringList);
 	var subFiles = folderObject.getFiles();
 	
@@ -134,7 +151,7 @@ function renameFilesByInsertingAStringAfterIndex(folderObject, spreadsheetData) 
 	if (spreadsheetData.insertString == "") {
 		return 0;
 	}
-	numberOfFilesRenamed = 0;
+	var numberOfFilesRenamed = 0;
 	var subFiles = folderObject.getFiles();
 	
 	while (subFiles.hasNext()) {
@@ -148,4 +165,79 @@ function renameFilesByInsertingAStringAfterIndex(folderObject, spreadsheetData) 
 		file.setName(newName);
 	}
 	return numberOfFilesRenamed;
+}
+
+
+function renameFilesOfAFolderWithGuid() {
+	var spreadsheetData = getSpreadsheetData();
+	var folderObject = getFolderObjectFromFolderId(spreadsheetData.folderId);
+  
+	var numberOfFilesRenamed = 0;
+	if (folderObject.getName() == spreadsheetData.folderNameForGuid) {
+		var filesObject = folderObject.getFiles();
+
+		while (filesObject.hasNext()) {
+			var file = filesObject.next();
+			if (!isRandomName(file.getName())) {
+				var newFileName = createGUID().concat(file.getName().substring(file.getName().lastIndexOf(".")));
+				Logger.log(file.getName() + "  ||  " + newFileName);
+				renamer(file, newFileName, spreadsheetData.renameFlag);
+				numberOfFilesRenamed++;
+			}
+		}
+	} else {
+		var result = ui.alert("Wrong Folder ERROR",
+								"Folder ID and corresponding folder name mismatch. Please check again",
+								ui.ButtonSet.OK);
+	}
+	ss.toast("Renamer has now completed ...\nNumber of files renamed = " + numberOfFilesRenamed, "Renamer END", -1);
+}
+
+
+function renamer(file, newFileName, renameFlag) {
+	if (renameFlag) {
+		file.setName(newFileName);
+	}
+}
+
+
+function createGUID() {
+	return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+		var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r&0x3 | 0x8);
+		return v.toString(16);
+	});
+}
+
+
+function isGUID(guid) {
+	let s = guid;
+	s = s.match('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
+	return s != null;
+}
+
+
+function isRandomName(name) {
+	var regexPatterns = ['^[0-9]{8,10}_[0-9]{15,16}_[0-9]{18,20}_[0-9a-zA-Z]{1,4}[.][a-zA-Z]{3,4}$',
+							'^img_[0-9]{1}_[0-9]{13}[.][a-zA-Z]{3,4}$']
+
+	for (let i = 0; i < regexPatterns.length; i++) {
+		let p = name;
+		p = p.match(regexPatterns[i]);
+		if (p != null) {
+			return true;
+		};
+	}
+
+	return isGUID(name.substring(0, name.lastIndexOf(".")));
+}
+
+
+async function sleepUsingPromise(ms) {
+	return await function(ms) {return new Promise(resolve => setTimeout(resolve, ms));} (ms);
+}
+
+
+function sleepUsingDate(delay) {
+	var start = new Date().getTime();
+	while (new Date().getTime() < start + delay);
 }

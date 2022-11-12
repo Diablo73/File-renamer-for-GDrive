@@ -16,7 +16,11 @@ function sendEmailUsingGmail() {
 		}
 		var tableRow = '<tr>';
 		for (let col = 0; col < data[row].length; col++) {
-			tableRow += '<td style="font-family: Monospace; font-size: 10px;">' + data[row][col] + '</td>';
+			if (col == 1) {
+				tableRow += '<td style="font-family: Monospace; font-size: 10px; text-align: right;">' + data[row][col] + '</td>';
+			} else {
+				tableRow += '<td style="font-family: Monospace; font-size: 10px;">' + data[row][col] + '</td>';
+			}
 		}
 		tableRow += '</tr>';
 		tableRowsList.push(tableRow);

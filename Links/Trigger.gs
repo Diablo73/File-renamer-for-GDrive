@@ -35,3 +35,32 @@ function deleteTrigger(triggerName) {
 		}
 	}
 }
+
+
+function listTriggers() {
+	var projectTriggers = ScriptApp.getProjectTriggers();
+	for (let i = 0; i < projectTriggers.length; i++) {
+		Logger.log("Trigger = " + projectTriggers[i].getUniqueId() + ", " + projectTriggers[i].getHandlerFunction());
+	}
+}
+
+
+function onSubmitForm(e) {
+	var formAnswers = e.namedValues;
+	if (check2fa(formAnswers["name"][0], formAnswers["otp"][0])) {
+		switch(formAnswers["function"][0]) {
+			case "main":
+				mainFunctionViaTrigger();
+				break;
+			case "mail":
+				sendEmailUsingGmail();
+				break;
+			case "bkup":
+				createBackup();
+				break;
+			default:
+				return ContentService.createTextOutput("❌ INCORRECT PROPERTIES = " + body["method"]);
+		}
+		Logger.log(formAnswers["function"][0]);
+	}
+}

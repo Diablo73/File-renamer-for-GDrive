@@ -13,12 +13,13 @@ function createTrigger(triggerName) {
 		}
 	}
 
-	ScriptApp.newTrigger(triggerName)
+	var trigger =  ScriptApp.newTrigger(triggerName)
 				.timeBased()
 				.after(1 * 60 * 1000)
 				.create();
 	// Run the trigger after 1 min
 	Logger.log("Created Trigger = " + triggerName);
+	return trigger;
 }
 
 
@@ -29,7 +30,8 @@ function deleteTrigger(triggerName) {
 
 	var projectTriggers = ScriptApp.getProjectTriggers();
 	for (let i = 0; i < projectTriggers.length; i++) {
-		if (projectTriggers[i].getHandlerFunction() == triggerName && !PROD_TRIGGERS.includes(projectTriggers[i].getUniqueId())) {
+		if ((projectTriggers[i].getHandlerFunction() == triggerName || projectTriggers[i].getUniqueId() == triggerName) 
+			&& !PROD_TRIGGERS.includes(projectTriggers[i].getUniqueId())) {
 			ScriptApp.deleteTrigger(projectTriggers[i]);
 			Logger.log("Deleted Trigger = " + triggerName);
 		}
